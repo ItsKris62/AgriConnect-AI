@@ -1,0 +1,9 @@
+/* theme.css */
+:root {
+    --primary: #85FFC7;
+    --secondary: #297373;
+    --highlight: #FF8552;
+    --background: #E6E6E6;
+    --text-primary: #333;
+    --text-secondary: #666;
+  }
