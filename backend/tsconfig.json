@@ -73,6 +73,9 @@
     // "preserveConstEnums": true,                       /* Disable erasing 'const enum' declarations in generated code. */
     // "declarationDir": "./",                           /* Specify the output directory for generated declaration files. */
 
+    "outDir": "./dist",                       // Output compiled JavaScript files to ./dist
+    "rootDir": "./src",                       // Source files are in ./src
+
     /* Interop Constraints */
     // "isolatedModules": true,                          /* Ensure that each file can be safely transpiled without relying on other imports. */
     // "verbatimModuleSyntax": true,                     /* Do not transform or elide any imports or exports not marked as type-only, ensuring they are written in the output file's format based on the 'module' setting. */
@@ -107,5 +110,7 @@
     /* Completeness */
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
-  }
+  },
+  "include": ["src/**/*"],                    // Include all files in the src directory
+  "exclude": ["node_modules", "**/*.test.ts"] // Exclude node_modules and test files
 }

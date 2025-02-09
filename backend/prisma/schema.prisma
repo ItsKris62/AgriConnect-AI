@@ -4,11 +4,95 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// schema.prisma
+
+// prisma/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+model User {
+  id           Int       @id @default(autoincrement())
+  role         String    @db.VarChar(50)
+  name         String    @db.VarChar(100)
+  email        String    @unique @db.VarChar(100)
+  passwordHash String    @db.VarChar(255)
+  phoneNumber  String?   @unique @db.VarChar(15)
+  location     Location?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
+  products     Product[]
+  transactions Transaction[]
+  reviews      Review[]
+}
+
+model Product {
+  id            Int       @id @default(autoincrement())
+  farmer        User      @relation(fields: [farmerId], references: [id])
+  farmerId      Int
+  category      Category  @relation(fields: [categoryId], references: [id])
+  categoryId    Int
+  name          String    @db.VarChar(100)
+  description   String?
+  quantity      Decimal   @db.Decimal(10, 2)
+  unitPrice     Decimal   @db.Decimal(10, 2)
+  imageUrl      String?
+  qualityScore  Decimal?  @db.Decimal(3, 2)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  transactions  Transaction[]
+  reviews       Review[]
+  aiPredictions AiPrediction[]
+}
+
+model Transaction {
+  id           Int      @id @default(autoincrement())
+  buyer        User     @relation("BuyerTransaction", fields: [buyerId], references: [id])
+  buyerId      Int
+  product      Product  @relation(fields: [productId], references: [id])
+  productId    Int
+  quantity     Decimal  @db.Decimal(10, 2)
+  totalPrice   Decimal  @db.Decimal(10, 2)
+  transactionDate DateTime @default(now())
+  status       String    @db.VarChar(50)
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  buyer      User     @relation("BuyerReview", fields: [buyerId], references: [id])
+  buyerId    Int
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  Int
+  rating     Int      @db.SmallInt
+  comment    String?
+  createdAt  DateTime @default(now())
+}
+
+model Category {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique @db.VarChar(100)
+  description String?
+  products   Product[]
+}
+
+model Location {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique @db.VarChar(100)
+  latitude   Decimal? @db.Decimal(9, 6)
+  longitude  Decimal? @db.Decimal(9, 6)
+  users      User[]
+}
+
+model AiPrediction {
+  id              Int      @id @default(autoincrement())
+  product         Product  @relation(fields: [productId], references: [id])
+  productId       Int
+  predictedPrice  Decimal? @db.Decimal(10, 2)
+  qualityScore    Decimal? @db.Decimal(3, 2)
+  predictionDate  DateTime @default(now())
 }
