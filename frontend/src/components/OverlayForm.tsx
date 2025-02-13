@@ -1,81 +1,216 @@
-"use client";
-
-import { motion } from "framer-motion";
-import { useState } from "react";
+// src/components/OverlayForm.tsx
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Input from "./Input";
 import Button from "./Button";
-import { loginWithProvider } from "../services/authService";
-import { FcGoogle } from "react-icons/fc";
-import { FaFacebook } from "react-icons/fa";
+import { signInUser, signUpUser, resetPassword } from "../services/supabaseService";
 
 interface OverlayFormProps {
-  title: string;
-  buttonText: string;
-  onSubmit: (data: { email: string; password: string }) => void;
-  toggleForm?: () => void;
-  errorMessage?: string;
-  showReset?: boolean;
+  onClose: () => void;
 }
 
-const OverlayForm: React.FC<OverlayFormProps> = ({ title, buttonText, onSubmit, toggleForm, errorMessage, showReset }) => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+const OverlayForm: React.FC<OverlayFormProps> = ({ onClose }) => {
+  const [mode, setMode] = useState<"login" | "register" | "reset">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // Handle login
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    try {
+      await signInUser(email, password);
+      onClose(); // Close the overlay after successful login
+    } catch (err: any) {
+      setError(err.message || "Invalid credentials.");
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
+  // Handle registration
+  const handleRegister = async () => {
+    if (!name || !email || !password || !confirmPassword) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    try {
+      await signUpUser(email, password, { data: { name } });
+      setMode("login"); // Switch to login mode after successful registration
+    } catch (err: any) {
+      setError(err.message || "Registration failed.");
+    }
+  };
+
+  // Handle password reset
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError("Please enter your email to reset the password.");
+      return;
+    }
+
+    try {
+      await resetPassword(email);
+      alert("Password reset link sent to your email!");
+      setMode("login"); // Switch to login mode after sending the reset link
+    } catch (err: any) {
+      setError(err.message || "Failed to send password reset email.");
+    }
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -50 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -50 }}
-      transition={{ duration: 0.5 }}
-      className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50"
+      className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose} // Close overlay on background click
     >
-      <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-        <h2 className="text-2xl font-bold text-center mb-4">{title}</h2>
+      <motion.div
+        className="bg-white p-8 rounded-lg shadow-lg w-96 relative"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 20, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the form
+      >
+        <AnimatePresence mode="wait">
+          {/* Login Form */}
+          {mode === "login" && (
+            <motion.form
+              key="login"
+              onSubmit={(e) => e.preventDefault()}
+              layout
+            >
+              <h2 className="text-2xl font-bold text-center text-secondary mb-6">Login</h2>
+              {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-4"
+              />
+              <Button onClick={handleLogin} fullWidth className="mt-4">
+                Login
+              </Button>
+              <p className="text-center mt-4">
+                Don't have an account?{" "}
+                <button
+                  onClick={() => setMode("register")}
+                  className="text-primary font-medium"
+                >
+                  Sign Up
+                </button>
+              </p>
+              <p className="text-center mt-2">
+                <button
+                  onClick={() => setMode("reset")}
+                  className="text-primary font-medium"
+                >
+                  Forgot Password?
+                </button>
+              </p>
+            </motion.form>
+          )}
 
-        {errorMessage && <p className="text-red-500 text-sm text-center mb-2">{errorMessage}</p>}
+          {/* Register Form */}
+          {mode === "register" && (
+            <motion.form
+              key="register"
+              onSubmit={(e) => e.preventDefault()}
+              layout
+            >
+              <h2 className="text-2xl font-bold text-center text-secondary mb-6">Sign Up</h2>
+              {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+              <Input
+                type="text"
+                placeholder="Full Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-4"
+              />
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-4"
+              />
+              <Input
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="mt-4"
+              />
+              <Button onClick={handleRegister} fullWidth className="mt-4">
+                Sign Up
+              </Button>
+              <p className="text-center mt-4">
+                Already have an account?{" "}
+                <button
+                  onClick={() => setMode("login")}
+                  className="text-primary font-medium"
+                >
+                  Login
+                </button>
+              </p>
+            </motion.form>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input label="Email" type="email" name="email" value={formData.email} onChange={handleChange} required />
-          <Input label="Password" type="password" name="password" value={formData.password} onChange={handleChange} required />
-          <Button text={buttonText} fullWidth />
-        </form>
-
-        {showReset && (
-          <p className="text-center text-sm mt-2">
-            <a href="/auth/reset" className="text-primary cursor-pointer">
-              Forgot password?
-            </a>
-          </p>
-        )}
-
-        <div className="flex justify-center gap-4 mt-4">
-          <button onClick={() => loginWithProvider("google")} className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-lg">
-            <FcGoogle size={20} />
-            Login with Google
-          </button>
-          <button onClick={() => loginWithProvider("facebook")} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg">
-            <FaFacebook size={20} />
-            Login with Facebook
-          </button>
-        </div>
-
-        {toggleForm && (
-          <p className="text-center text-sm mt-4">
-            {title === "Login" ? "Don't have an account?" : "Already have an account?"}
-            <span onClick={toggleForm} className="text-primary cursor-pointer ml-1">
-              {title === "Login" ? "Register" : "Login"}
-            </span>
-          </p>
-        )}
-      </div>
+          {/* Password Reset Form */}
+          {mode === "reset" && (
+            <motion.form
+              key="reset"
+              onSubmit={(e) => e.preventDefault()}
+              layout
+            >
+              <h2 className="text-2xl font-bold text-center text-secondary mb-6">Forgot Password?</h2>
+              {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Button onClick={handleResetPassword} fullWidth className="mt-4">
+                Send Reset Link
+              </Button>
+              <p className="text-center mt-4">
+                Back to{" "}
+                <button
+                  onClick={() => setMode("login")}
+                  className="text-primary font-medium"
+                >
+                  Login
+                </button>
+              </p>
+            </motion.form>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </motion.div>
   );
 };

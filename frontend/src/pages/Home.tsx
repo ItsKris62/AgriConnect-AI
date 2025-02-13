@@ -1,13 +1,23 @@
 // src/pages/Home.tsx
-import React from "react";
-import BentoGrid from "../components/BentoGrid"; 
+import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import BentoGrid from "../components/BentoGrid";
+import OverlayForm from "../components/OverlayForm";
+import Button from "../components/Button";
 
-const LandingPage: React.FC = () => {
+const Home: React.FC = () => {
+  const [showForm, setShowForm] = useState(false);
+
+  // Toggle the overlay form
+  const toggleForm = () => setShowForm((prev) => !prev);
+
   return (
     <>
-      <Header />
+      {/* Header */}
+      <Header user={{ name: "John Doe" }} onLogout={() => console.log("Logged out")} />
+
+      {/* Main Content */}
       <main className="bg-background min-h-screen">
         {/* Hero Section */}
         <section className="py-16 px-4 md:px-8 lg:px-16">
@@ -20,14 +30,14 @@ const LandingPage: React.FC = () => {
               insights powered by AI.
             </p>
             <div className="mt-8 flex justify-center">
-              <button className="px-6 py-3 bg-secondary text-white rounded-md hover:bg-highlight transition-colors">
+              <Button onClick={toggleForm} fullWidth className="w-auto">
                 Get Started
-              </button>
+              </Button>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
+        {/* Features Section with BentoGrid */}
         <section className="py-16 px-4 md:px-8 lg:px-16 bg-primary/10">
           <div className="max-w-7xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-8 text-secondary">
@@ -81,35 +91,7 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Testimonials Section */}
-        <section className="py-16 px-4 md:px-8 lg:px-16">
-          <div className="max-w-7xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-8 text-secondary">
-              What Our Users Say
-            </h2>
-            <BentoGrid>
-              {/* Testimonial 1 */}
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <p className="text-gray-600">
-                  "Soko-Yetu has transformed the way I sell my produce. The AI
-                  predictions are spot-on!"
-                </p>
-                <p className="font-medium mt-2">- John Doe, Farmer</p>
-              </div>
-
-              {/* Testimonial 2 */}
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <p className="text-gray-600">
-                  "I love the ease of use and the ability to connect with local
-                  farmers directly."
-                </p>
-                <p className="font-medium mt-2">- Jane Smith, Buyer</p>
-              </div>
-            </BentoGrid>
-          </div>
-        </section>
-
-        {/* Call-to-Action Footer */}
+        {/* Call-to-Action Section */}
         <section className="py-16 bg-secondary text-white text-center">
           <div className="max-w-7xl mx-auto">
             <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
@@ -117,15 +99,20 @@ const LandingPage: React.FC = () => {
               Join thousands of farmers and buyers already using Soko-Yetu to
               grow their businesses.
             </p>
-            <button className="px-6 py-3 bg-highlight text-secondary rounded-md hover:bg-primary transition-colors">
+            <Button onClick={toggleForm} fullWidth className="w-auto">
               Sign Up Now
-            </button>
+            </Button>
           </div>
         </section>
       </main>
+
+      {/* Footer */}
       <Footer />
+
+      {/* Overlay Form */}
+      {showForm && <OverlayForm onClose={toggleForm} />}
     </>
   );
 };
 
-export default LandingPage;
+export default Home;
