@@ -1,105 +1,81 @@
-// OverlayForm.tsx
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+"use client";
+
+import { motion } from "framer-motion";
+import { useState } from "react";
 import Input from "./Input";
 import Button from "./Button";
+import { loginWithProvider } from "../services/authService";
+import { FcGoogle } from "react-icons/fc";
+import { FaFacebook } from "react-icons/fa";
 
-const OverlayForm: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true); // Toggle between login and signup
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+interface OverlayFormProps {
+  title: string;
+  buttonText: string;
+  onSubmit: (data: { email: string; password: string }) => void;
+  toggleForm?: () => void;
+  errorMessage?: string;
+  showReset?: boolean;
+}
+
+const OverlayForm: React.FC<OverlayFormProps> = ({ title, buttonText, onSubmit, toggleForm, errorMessage, showReset }) => {
+  const [formData, setFormData] = useState({ email: "", password: "" });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Add your API call or authentication logic here
-  };
-
-  const handleToggle = () => {
-    setIsLogin(!isLogin);
+    onSubmit(formData);
   };
 
   return (
     <motion.div
-      className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ opacity: 0, y: -50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -50 }}
+      transition={{ duration: 0.5 }}
+      className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50"
     >
-      <motion.form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-lg shadow-lg w-96 space-y-4"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <h2 className="text-2xl font-bold text-center">
-          {isLogin ? "Login" : "Sign Up"}
-        </h2>
+      <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+        <h2 className="text-2xl font-bold text-center mb-4">{title}</h2>
 
-        <AnimatePresence mode="wait">
-          {/* Email Input */}
-          <motion.div layout>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-            />
-          </motion.div>
+        {errorMessage && <p className="text-red-500 text-sm text-center mb-2">{errorMessage}</p>}
 
-          {/* Password Input */}
-          <motion.div layout>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-            />
-          </motion.div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input label="Email" type="email" name="email" value={formData.email} onChange={handleChange} required />
+          <Input label="Password" type="password" name="password" value={formData.password} onChange={handleChange} required />
+          <Button text={buttonText} fullWidth />
+        </form>
 
-          {/* Confirm Password (only for Signup) */}
-          {!isLogin && (
-            <motion.div layout>
-              <Input
-                type="password"
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={(e) =>
-                  setFormData({ ...formData, confirmPassword: e.target.value })
-                }
-              />
-            </motion.div>
-          )}
+        {showReset && (
+          <p className="text-center text-sm mt-2">
+            <a href="/auth/reset" className="text-primary cursor-pointer">
+              Forgot password?
+            </a>
+          </p>
+        )}
 
-          {/* Submit Button */}
-          <Button type="submit" fullWidth>
-            {isLogin ? "Login" : "Sign Up"}
-          </Button>
+        <div className="flex justify-center gap-4 mt-4">
+          <button onClick={() => loginWithProvider("google")} className="flex items-center gap-2 px-4 py-2 bg-gray-200 rounded-lg">
+            <FcGoogle size={20} />
+            Login with Google
+          </button>
+          <button onClick={() => loginWithProvider("facebook")} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg">
+            <FaFacebook size={20} />
+            Login with Facebook
+          </button>
+        </div>
 
-          {/* Toggle Between Login and Signup */}
-          <motion.div layout className="flex justify-center">
-            <p className="text-sm">
-              {isLogin
-                ? "Don't have an account?"
-                : "Already have an account?"}
-              <button
-                onClick={handleToggle}
-                className="text-primary ml-2 font-medium cursor-pointer"
-              >
-                {isLogin ? "Sign Up" : "Login"}
-              </button>
-            </p>
-          </motion.div>
-        </AnimatePresence>
-      </motion.form>
+        {toggleForm && (
+          <p className="text-center text-sm mt-4">
+            {title === "Login" ? "Don't have an account?" : "Already have an account?"}
+            <span onClick={toggleForm} className="text-primary cursor-pointer ml-1">
+              {title === "Login" ? "Register" : "Login"}
+            </span>
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 };
